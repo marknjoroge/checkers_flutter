@@ -1,9 +1,15 @@
+import 'package:checkers/screens/pre_game.dart';
+import 'package:checkers/screens/profile.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'screens/home.dart';
 
-import 'board2.dart';
+import 'screens/chess_board.dart';
 
 void main() {
+  // hide status bar and navigation bar
   runApp(const MyApp());
+  SystemChrome.setEnabledSystemUIOverlays([]);
 }
 
 class MyApp extends StatelessWidget {
@@ -14,15 +20,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Checkers Game',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.brown,
       ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Checkers Game'),
-        ),
-        body: Center(child: ChessBoard()),
-      ),
+      // home: ProfilePage(),
+      home: const ChessBoard(),
     );
   }
 }
