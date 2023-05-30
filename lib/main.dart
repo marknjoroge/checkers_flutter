@@ -5,17 +5,17 @@ import 'package:flutter/services.dart';
 import 'screens/home.dart';
 
 import 'screens/chess_board.dart';
+import 'screens/test.dart';
 
 void main() {
   // hide status bar and navigation bar
   runApp(const MyApp());
-  SystemChrome.setEnabledSystemUIOverlays([]);
+  // SystemChrome.setEnabledSystemUIOverlays([]);
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -25,7 +25,10 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.brown,
       ),
       // home: ProfilePage(),
-      home: const ChessBoard(),
+      home: const PreGame(),
+      // home: const Home(),
+      // home: const ChessBoard(),
+      // home: const Test()
     );
   }
 }

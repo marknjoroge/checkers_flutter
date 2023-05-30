@@ -6,16 +6,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animated_dialog/flutter_animated_dialog.dart';
 
 import '../widgets/country_chooser.dart';
+import '../widgets/level_chooser.dart';
 import '../widgets/statistics_header.dart';
 
-class PreGame extends StatefulWidget {
-  const PreGame({super.key});
+class PreGame extends StatelessWidget {
+  final int? opponent;
 
-  @override
-  State<PreGame> createState() => _PreGameState();
-}
+  const PreGame({
+    Key? key,
+    this.opponent = Opponent.humanOffline,
+  }) : super(key: key);
 
-class _PreGameState extends State<PreGame> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -24,17 +25,20 @@ class _PreGameState extends State<PreGame> {
       body: Container(
         width: size.width,
         height: size.height,
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           image: DecorationImage(
             image: const AssetImage("assets/images/background3.jpg"),
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
-                Colors.brown.withOpacity(0.6), BlendMode.dstATop),
+              Colors.brown.withOpacity(0.9),
+              BlendMode.dstATop,
+            ),
           ),
         ),
         child: Column(
           children: [
-            SizedBox(height: 50),
+            const SizedBox(height: 50),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -49,7 +53,7 @@ class _PreGameState extends State<PreGame> {
                       color: kBoardDark,
                       borderRadius: BorderRadius.circular(25),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.arrow_back_ios_new,
                       color: kWoodenBrown,
                       weight: 60,
@@ -63,32 +67,63 @@ class _PreGameState extends State<PreGame> {
                     ),
                   ),
                 ),
-                StatisticsHead(),
-                SizedBox(width: 50),
+                const StatisticsHead(),
+                const SizedBox(width: 50),
               ],
             ),
-            SizedBox(height: 200),
-            Hero(
-              tag: 'btnVsHumanOffline',
-              child: Text('vs Human (offline)'),
+            const SizedBox(height: 200),
+            Text(
+              Opponent.names[opponent!],
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 30,
+              ),
             ),
-            SizedBox(height: 20),
-            CountryChooser(),
-            SizedBox(height: 20),
+            const SizedBox(height: 40),
+            const CountryChooser(),
+            const SizedBox(height: 20),
+            opponent == Opponent.humanOffline
+                ? _vsHumanOffline(context)
+                : opponent == Opponent.humanOnline
+                    ? _vsHumanOnline(context)
+                    : _vsComputer(context),
+            const SizedBox(height: 20),
             ElevatedButton(
               style: buttonStyle1,
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const ChessBoard(),
+                    builder: (context) => ChessBoard(
+                      opponent: opponent ?? Opponent.humanOffline,
+                    ),
                   ),
                 );
               },
-              child: Text('Play'),
+              child: const Text('Play'),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _vsHumanOffline(BuildContext context) {
+    return Column(
+      children: [],
+    );
+  }
+
+  Widget _vsHumanOnline(BuildContext context) {
+    return Column(
+      children: [],
+    );
+  }
+
+  Widget _vsComputer(BuildContext context) {
+    return Column(
+      children: [
+        LevelChooser(),
+      ],
     );
   }
 }

@@ -12,8 +12,6 @@ class AmericanCheckers {
     }
     for (int i = 0; i < possibleMoves.length; i++) {
       int theSide = int.parse(position[0]) - int.parse(possibleMoves[i][0]);
-      print(theSide);
-      print(side);
       if ((theSide > 0 && side > 0) || (theSide < 0 && side < 0)) {
         if (theSide > 1 || theSide < -1) {
           eatMoves.add(possibleMoves[i]);

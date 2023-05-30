@@ -24,8 +24,9 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ),
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(30.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -41,7 +42,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       color: kBoardDark,
                       borderRadius: BorderRadius.circular(25),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.arrow_back_ios_new,
                       color: kWoodenBrown,
                       weight: 60,
@@ -55,8 +56,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                 ),
-                StatisticsHead(),
-                SizedBox(width: 50),
+                const StatisticsHead(),
+                const SizedBox(width: 50),
               ],
             ),
             Row(
@@ -98,23 +99,81 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ],
                 ),
+                const SizedBox(width: 20),
+                const Text(
+                  'John Doe',
+                  style: TextStyle(
+                    fontSize: 29,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
               ],
             ),
-            Container(
-              child: Column(children: [
-                Row(
-                  children: [
-                    keyText('Played'),
-                    keyText('Won'),
-                    keyText('Win ratio'),
-                    Container(
-                      width: 200,
-                      height: 200,
-                      color: Colors.red,
-                    )
-                  ],
-                )
-              ]),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 40, bottom: 10),
+                  child: Text(
+                    'Statistics',
+                    textAlign: TextAlign.start,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.white,
+                      // backgroundColor: kBoardDark,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Table(
+                    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                    children: [
+                      TableRow(
+                        children: [
+                          keyText(''),
+                          keyText('Played'),
+                          keyText('Won'),
+                          keyText('Win ratio'),
+                          keyText('Best time'),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          keyText('vs Human (online)'),
+                          valueText('10'),
+                          valueText('5'),
+                          valueText('50%'),
+                          valueText('1:30'),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          keyText('vs Human (offline)'),
+                          valueText('10'),
+                          valueText('5'),
+                          valueText('50%'),
+                          valueText('1:30'),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          keyText('vs AI'),
+                          valueText('10'),
+                          valueText('5'),
+                          valueText('50%'),
+                          valueText('1:30'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -124,14 +183,24 @@ class _ProfilePageState extends State<ProfilePage> {
 }
 
 Widget keyText(String text) {
-  print('$text');
-  return Container(
+  return Text(
+    text,
+    style: const TextStyle(
+      fontSize: 12,
+      color: Colors.grey,
+    ),
+  );
+}
+
+Widget valueText(String text) {
+  return Padding(
+    padding: const EdgeInsets.all(10.0),
     child: Text(
       text,
-      style: TextStyle(
-        fontSize: 200,
-        color: Colors.grey,
-        backgroundColor: Colors.green,
+      style: const TextStyle(
+        fontSize: 25,
+        color: kBoardDark,
+        fontWeight: FontWeight.bold,
       ),
     ),
   );

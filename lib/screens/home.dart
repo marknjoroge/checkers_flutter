@@ -1,4 +1,5 @@
 import 'package:checkers/screens/pre_game.dart';
+import 'package:checkers/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animated_dialog/flutter_animated_dialog.dart';
 
@@ -23,7 +24,7 @@ class _HomeState extends State<Home> {
             image: const AssetImage("assets/images/background3.jpg"),
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
-                Colors.brown.withOpacity(0.8), BlendMode.dstATop),
+                Colors.brown.withOpacity(0.9), BlendMode.dstATop),
           ),
         ),
         child: Column(
@@ -77,54 +78,64 @@ Future gameDialog(BuildContext context) async {
     context: context,
     barrierDismissible: true,
     builder: (BuildContext context) {
-      return Container(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    style: buttonStyle2,
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const PreGame(),
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  style: buttonStyle2,
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const PreGame(
+                          opponent: Opponent.computer,
                         ),
-                      );
-                    },
-                    child: const Text('vs Computer (offline)'),
-                  ),
+                      ),
+                    );
+                  },
+                  child: const Text('vs Computer'),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    style: buttonStyle2,
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const PreGame(),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  style: buttonStyle2,
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const PreGame(
+                          opponent: Opponent.humanOffline,
                         ),
-                      );
-                    },
-                    child: const Hero(
-                      tag: 'btnVsHumanOffline',
-                      child: Text('vs Human (offline)'),
-                    ),
+                      ),
+                    );
+                  },
+                  child: const Hero(
+                    tag: 'btnVsHumanOffline',
+                    child: Text('vs Human (offline)'),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton(
-                    style: buttonStyle2,
-                    onPressed: () {},
-                    child: const Text('vs Human (online)'),
-                  ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  style: buttonStyle2,
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const PreGame(
+                          opponent: Opponent.humanOnline,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('vs Human (online)'),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       );

@@ -9,7 +9,12 @@ import '../utils/constants.dart';
 import '../widgets/pawn.dart';
 
 class ChessBoard extends StatefulWidget {
-  const ChessBoard({super.key});
+  final int opponent;
+
+  const ChessBoard({
+    Key? key,
+    this.opponent = Opponent.computer,
+  }) : super(key: key);
 
   @override
   State<ChessBoard> createState() => _ChessBoardState();
@@ -71,11 +76,10 @@ class _ChessBoardState extends State<ChessBoard> {
 
   List<String> possibleMoves = [];
   List<Map> possibleEat = [];
+  List<Map> doubleJumps = [];
 
   int whiteScore = 0;
   int blackScore = 0;
-
-  /// Helper functions
 
   void scores() {
     setState(() {
@@ -89,8 +93,7 @@ class _ChessBoardState extends State<ChessBoard> {
       blackScore = 12 - allWhitePositions.length;
     });
 
-    // if (whiteScore == 12) {
-    // } else if (blackScore == 12) {}
+    checkIfGameWon(context);
   }
 
   void checkIfGameWon(BuildContext context) {
@@ -101,6 +104,11 @@ class _ChessBoardState extends State<ChessBoard> {
       stopTimers();
       customDialog(context, 'black');
     }
+  }
+
+  void drawGame(BuildContext context) {
+    stopTimers();
+    customDialog(context, 'draw');
   }
 
   void changeTimer() {
@@ -145,6 +153,19 @@ class _ChessBoardState extends State<ChessBoard> {
     }
 
     return true;
+  }
+
+  int checkAbnormalNumber(int number) {
+    print('number: $number');
+    return int.parse(checkAbnormalString(number.toString()));
+  }
+
+  String checkAbnormalString(String position) {
+    if (position.contains('-')) {
+      return '';
+    } else {
+      return position;
+    }
   }
 
   String canBeEatenByPawn(String position, {String tile = ''}) {
@@ -237,7 +258,103 @@ class _ChessBoardState extends State<ChessBoard> {
 
     refinedMoves = gameRules.normalPawnMoves(refinedMoves, activeTile, turn);
 
+    getMultiJumps();
+
     return refinedMoves;
+  }
+
+  List<Map> getMultiJumps() {
+    List<Map> multiJumps = [];
+    int j = 0;
+
+    doubleJumps = multiJumps;
+
+    List<String> opponentPositions = [];
+
+    if (turn == 'white') {
+      opponentPositions = allBlackPositions;
+    } else {
+      opponentPositions = allWhitePositions;
+    }
+
+    List<Map> possibleCaptures = possibleEat;
+
+    for (Map capture in possibleCaptures) {
+      String moveTo = capture['moveTo'];
+      String eat = capture['eat'];
+
+      doubleJumps.add({
+        '$j': [
+          {'moveTo': moveTo, 'eat': eat}
+        ]
+      });
+
+      int rowDiff = int.parse(moveTo[0]) - int.parse(eat[0]);
+
+      print('rowDiff: $rowDiff, moveTo: $moveTo, eat: $eat');
+      
+      String pos1 = '99';
+      String pos2 = '99';
+
+      if (moveTo[0] != '7') {
+        if (moveTo[1] != '0') {
+          pos1 = '${int.parse(moveTo[0]) + rowDiff}${int.parse(moveTo[1]) - 1}';
+        }
+        if (moveTo[1] != '7') {
+          pos2 = '${int.parse(moveTo[0]) + rowDiff}${int.parse(moveTo[1]) + 1}';
+        }
+      }
+
+      print('pos2: $pos2, pos1: $pos1');
+
+      List<int> nextVictim = [
+        int.parse(checkAbnormalString(
+            pos2)),
+        int.parse(checkAbnormalString(
+            pos1))
+      ];
+
+      print('nextVictim: $nextVictim');
+
+      List<int> nextPositions = [
+        int.parse(checkAbnormalString('${nextVictim[0] + int.parse('${rowDiff}0') - 1}')),
+        int.parse(checkAbnormalString('${nextVictim[1] + int.parse('${rowDiff}0') + 1}')),
+      ];
+
+      for (int i = 0; i < nextPositions.length; i++) {
+        Map mapWithKey = doubleJumps.firstWhere((map) => map.containsKey('$j'));
+        var mapIndex = doubleJumps.indexOf(mapWithKey);
+
+        int nextPosition = nextPositions[i];
+
+        print('nextPosition: $nextPosition');
+
+        if (!isValidPosition(nextPosition.toString()) ||
+            !isEmptyTile(nextPosition.toString())) continue;
+
+        if (!opponentPositions.contains(nextVictim[i].toString())) continue;
+
+        print('mapWithKey: $mapWithKey');
+        mapWithKey['$j'].add({
+          'moveTo': nextPosition.toString(),
+          'eat': nextVictim[i].toString()
+        });
+
+        doubleJumps[mapIndex] = mapWithKey;
+
+        possibleMoves.add(nextPosition.toString());
+      }
+      j++;
+    }
+
+    doubleJumps = multiJumps;
+
+    if (doubleJumps.isNotEmpty) {
+      print('doubleJumps: ${doubleJumps}');
+      print('possibleMoves: ${possibleMoves}');
+    }
+
+    return multiJumps;
   }
 
   List<String> getNextKingMoves(String position) {
@@ -249,6 +366,8 @@ class _ChessBoardState extends State<ChessBoard> {
     diagonals.addAll(calcLegalDiagonals(position, 1, -1));
     diagonals.addAll(calcLegalDiagonals(position, -1, 1));
     diagonals.addAll(calcLegalDiagonals(position, -1, -1));
+
+    getMultiJumps();
 
     return diagonals;
   }
@@ -304,7 +423,6 @@ class _ChessBoardState extends State<ChessBoard> {
     if (turn == 'white') {
       whitePawnsPositions.remove(activeTile);
       whitePawnsPositions.add(position);
-      turn = 'black';
       if (possibleEat.any((eat) => eat['moveTo'] == position)) {
         eaten =
             possibleEat.firstWhere((eat) => eat['moveTo'] == position)['eat'];
@@ -312,6 +430,19 @@ class _ChessBoardState extends State<ChessBoard> {
         blackPawnsPositions.remove(eaten);
         blackKingsPositions.remove(eaten);
       }
+
+      if (doubleJumps.isNotEmpty) {
+        for (var jump in doubleJumps) {
+          print('jump: ${jump['0'].length}');
+          if (jump['0'].length > 1) {
+            for (var i = 0; i < jump['0'].length; i++) {
+              blackPawnsPositions.remove(jump['0'][i]['eat']);
+              blackKingsPositions.remove(jump['0'][i]['eat']);
+            }
+          }
+        }
+      }
+      turn = 'black';
     } else {
       blackPawnsPositions.remove(activeTile);
       blackPawnsPositions.add(position);
@@ -322,6 +453,18 @@ class _ChessBoardState extends State<ChessBoard> {
 
         whiteKingsPositions.remove(eaten);
         whitePawnsPositions.remove(eaten);
+      }
+
+      if (doubleJumps.isNotEmpty) {
+        for (var jump in doubleJumps) {
+          print('jump: ${jump['0'].length}');
+          if (jump['0'].length > 1) {
+            for (var i = 0; i < jump['0'].length; i++) {
+              whiteKingsPositions.remove(jump['0'][i]['eat']);
+              whitePawnsPositions.remove(jump['0'][i]['eat']);
+            }
+          }
+        }
       }
     }
 
@@ -526,6 +669,10 @@ class _ChessBoardState extends State<ChessBoard> {
   }
 
   void aiPlayer() {
+    print('aiPlayer');
+    print(widget.opponent);
+    if (widget.opponent != Opponent.computer) return;
+
     if (turn == 'black') {
       Map<String, List<String>> possible =
           getAllNextPawnMoves(blackPawnsPositions, blackKingsPositions);
@@ -535,13 +682,28 @@ class _ChessBoardState extends State<ChessBoard> {
         possible = eatingMoves;
       }
 
+      if (possible.isEmpty) {
+        print('no possible moves');
+      }
+
       String pawn = possible.keys.toList()[Random().nextInt(possible.length)];
       String move = possible[pawn]![Random().nextInt(possible[pawn]!.length)];
 
       activeTile = pawn;
 
+      List multiJumps = getMultiJumps();
+
+      if (multiJumps.isNotEmpty) {
+        for (var jump in multiJumps) {
+          print('jump: ${jump['0'].length}');
+          if (jump['0'].length > 1) {
+            move = jump['0'][jump['0'].length - 1]['moveTo'];
+          }
+        }
+      }
+      //   print('aiDouble: $multiJumps');
+
       if (blackPawnsPositions.contains(pawn)) {
-        // print('pawn: $pawn, move: $move');
         movePawn(move);
       } else if (blackKingsPositions.contains(pawn)) {
         moveKing(move);
@@ -551,6 +713,9 @@ class _ChessBoardState extends State<ChessBoard> {
 
   @override
   Widget build(BuildContext context) {
+    final String opponentAvatar =
+        widget.opponent == Opponent.computer ? 'computer.png' : 'av2.png';
+
     double squareSize = MediaQuery.of(context).size.width * 0.85 / columns;
 
     blackPawnsPositions = blackStartingPositions;
@@ -558,6 +723,8 @@ class _ChessBoardState extends State<ChessBoard> {
 
     changeTimer();
     scores();
+
+    // customDialog(context, 'white');
 
     return Scaffold(
       body: Container(
@@ -685,7 +852,7 @@ class _ChessBoardState extends State<ChessBoard> {
                       duration: const Duration(milliseconds: 500),
                       opacity: turn == 'black' ? 1 : kPlayerOpacity,
                       child: Image(
-                        image: const AssetImage('assets/avatars/av2.png'),
+                        image: AssetImage('assets/avatars/$opponentAvatar'),
                         width: squareSize,
                       ),
                     ),
@@ -698,10 +865,6 @@ class _ChessBoardState extends State<ChessBoard> {
                 width: columns * squareSize + squareSize + 6,
                 height: rows * squareSize + squareSize + 6,
                 decoration: BoxDecoration(
-                  // border: Border.all(
-                  //   color: kPieceDark,
-                  //   width: 20,
-                  // ),
                   color: kPieceDark,
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -753,8 +916,6 @@ class _ChessBoardState extends State<ChessBoard> {
 
                               return GestureDetector(
                                 onTapDown: (TapDownDetails details) {
-                                  final RenderBox? referenceBox =
-                                      context.findRenderObject() as RenderBox?;
                                   if ((turn == 'white' &&
                                           whitePawnsPositions.contains(id)) ||
                                       (turn == 'black' &&
@@ -764,6 +925,7 @@ class _ChessBoardState extends State<ChessBoard> {
                                       possibleMoves = getNextPawnMoves(id);
                                       possibleMoves =
                                           getRefinedNextMoves(possibleMoves);
+                                      getMultiJumps();
                                     });
                                   } else if ((turn == 'white' &&
                                           whiteKingsPositions.contains(id) ||
@@ -772,8 +934,6 @@ class _ChessBoardState extends State<ChessBoard> {
                                     setState(() {
                                       activeTile = id;
                                       possibleMoves = getNextKingMoves(id);
-                                      print(
-                                          'moving king: ${possibleEat.toString()}');
                                     });
                                   } else if (possibleMoves.contains(id)) {
                                     if (whiteKingsPositions
@@ -784,7 +944,15 @@ class _ChessBoardState extends State<ChessBoard> {
                                       aiPlayer();
                                     } else {
                                       movePawn(id);
-                                      aiPlayer();
+                                      Future.delayed(
+                                        Duration(
+                                            milliseconds:
+                                                Random().nextInt(1000 - 300) +
+                                                    300),
+                                        () {
+                                          aiPlayer();
+                                        },
+                                      );
                                     }
                                     setState(() {
                                       activeTile = '';
@@ -802,6 +970,8 @@ class _ChessBoardState extends State<ChessBoard> {
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: possibleMoves.contains(id)
+                                        // doubleJumps.isNotEmpty &&
+                                        //     doubleJumps[0]['moveTo'] == id
                                         ? kWoodenBrown
                                         : isDark
                                             ? kBoardDark
@@ -814,47 +984,40 @@ class _ChessBoardState extends State<ChessBoard> {
                                         : null,
                                   ),
                                   child: Center(
-                                    child: AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 500),
-                                      child: whiteStartingPositions
-                                                  .contains(id) ||
-                                              whiteKingsPositions.contains(id)
-                                          ? Pawn(
-                                              width: squareSize,
-                                              height: squareSize,
-                                              color: kPieceLight,
-                                              isKing: whiteKingsPositions
-                                                  .contains(id),
-                                            )
-                                          : blackStartingPositions
-                                                      .contains(id) ||
-                                                  blackKingsPositions
-                                                      .contains(id)
-                                              ? Pawn(
-                                                  width: squareSize,
-                                                  height: squareSize,
-                                                  color: kPieceDark,
-                                                  isKing: blackKingsPositions
-                                                      .contains(id),
-                                                )
-                                              : possibleMoves.contains(id) &&
-                                                      checkIfKing(id, turn) &&
-                                                      !blackKingsPositions
-                                                          .contains(
-                                                              activeTile) &&
-                                                      !whiteKingsPositions
-                                                          .contains(activeTile)
-                                                  ? Center(
-                                                      child: Image(
-                                                        image: const AssetImage(
-                                                            'assets/images/crown.png'),
-                                                        width: squareSize * .6,
-                                                        height: squareSize * .6,
-                                                      ),
-                                                    )
-                                                  : null,
-                                    ),
+                                    child: whiteStartingPositions
+                                                .contains(id) ||
+                                            whiteKingsPositions.contains(id)
+                                        ? Pawn(
+                                            width: squareSize,
+                                            height: squareSize,
+                                            color: kPieceLight,
+                                            isKing: whiteKingsPositions
+                                                .contains(id),
+                                          )
+                                        : blackStartingPositions.contains(id) ||
+                                                blackKingsPositions.contains(id)
+                                            ? Pawn(
+                                                width: squareSize,
+                                                height: squareSize,
+                                                color: kPieceDark,
+                                                isKing: blackKingsPositions
+                                                    .contains(id),
+                                              )
+                                            : possibleMoves.contains(id) &&
+                                                    checkIfKing(id, turn) &&
+                                                    !blackKingsPositions
+                                                        .contains(activeTile) &&
+                                                    !whiteKingsPositions
+                                                        .contains(activeTile)
+                                                ? Center(
+                                                    child: Image(
+                                                      image: const AssetImage(
+                                                          'assets/images/crown.png'),
+                                                      width: squareSize * .6,
+                                                      height: squareSize * .6,
+                                                    ),
+                                                  )
+                                                : null,
                                   ),
                                 ),
                               );
@@ -929,30 +1092,29 @@ class _ChessBoardState extends State<ChessBoard> {
     super.dispose();
     await _whiteTimer.dispose();
   }
-}
 
-Widget _bottomButton(IconData icon, String text) {
-  return Column(
-    children: [
-      Icon(
-        icon,
-        color: Colors.white,
-      ),
-      Text(
-        text,
-        style: const TextStyle(
+  Widget _bottomButton(IconData icon, String text) {
+    return Column(
+      children: [
+        Icon(
+          icon,
           color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.w300,
         ),
-      ),
-    ],
-  );
-}
+        Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w300,
+          ),
+        ),
+      ],
+    );
+  }
 
-Future customDialog(BuildContext context, String status) async {
-  Size size = MediaQuery.of(context).size;
-  return showAnimatedDialog(
+  Future customDialog(BuildContext context, String status) async {
+    Size size = MediaQuery.of(context).size;
+    return showAnimatedDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
@@ -975,7 +1137,7 @@ Future customDialog(BuildContext context, String status) async {
                     padding: const EdgeInsets.all(8.0),
                     child: Center(
                       child: Text(
-                        'You have $status',
+                        '$status wins!',
                         style: const TextStyle(
                           color: kBoardLight,
                           fontSize: 30,
@@ -989,22 +1151,24 @@ Future customDialog(BuildContext context, String status) async {
             ),
           ),
         );
-      });
-}
+      },
+    );
+  }
 
-Widget label(String text, double squareSize, {bool row = true}) {
-  return Container(
-    width: row ? squareSize : null,
-    height: row ? null : squareSize,
-    padding: const EdgeInsets.all(3),
-    child: Center(
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: kPieceLight,
-          fontSize: 11,
+  Widget label(String text, double squareSize, {bool row = true}) {
+    return Container(
+      width: row ? squareSize : null,
+      height: row ? null : squareSize,
+      padding: const EdgeInsets.all(3),
+      child: Center(
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: kPieceLight,
+            fontSize: 11,
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

@@ -35,8 +35,14 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  flutter_animated_dialog: 
-  stop_watch_timer:
+  http: ^0.13.5
+  flutter_bloc: ^8.1.2
+  path_provider: ^2.0.14
+  sqflite: ^2.2.8
+  stop_watch_timer: ^2.0.0
+  path: ^1.8.2
+  flutter_animated_dialog: ^2.0.1
+  web_socket_channel: ^2.4.0
 
 dev_dependencies:
   flutter_test:
